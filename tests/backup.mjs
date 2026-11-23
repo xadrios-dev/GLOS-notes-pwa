@@ -25,7 +25,7 @@ await tx('images','readwrite',s=>s.put({id:'image-old',blob:new Blob(['testing-i
 let downloaded=null;
 const context={
   window:{JSZip},JSZip,
-  indexedDB,Blob,crypto:webcrypto,
+  indexedDB,Blob,Uint8Array,ArrayBuffer,crypto:webcrypto,
   URL:{createObjectURL:blob=>{downloaded=blob;return 'blob:offline-zip'},revokeObjectURL(){}},
   document:{body:{appendChild(){}},createElement:()=>({click(){},remove(){}})},
   setTimeout(){}
