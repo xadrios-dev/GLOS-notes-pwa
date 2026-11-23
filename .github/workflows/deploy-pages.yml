@@ -29,6 +29,13 @@ jobs:
         run: npm run check
       - name: Build static site
         run: npm run build
+      - name: Upload static site for alternative hosting
+        uses: actions/upload-artifact@v4
+        with:
+          name: glos-notes-pwa-static-site
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload offline-ready website
         uses: actions/upload-pages-artifact@v3
         with:

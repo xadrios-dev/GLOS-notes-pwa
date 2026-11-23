@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm run vendor && http-server www -p 8787 -c-1",
     "vendor": "node scripts/vendor-libs.mjs",
-    "check": "npm run vendor && node --check www/app.js && node --check www/platform.js && node --check www/pwa.js && node --check www/pwa-backup.js && node --check www/service-worker.js && node --check scripts/build.mjs && node tests/pwa.mjs",
+    "check": "npm run vendor && node --check www/app.js && node --check www/platform.js && node --check www/pwa.js && node --check www/pwa-backup.js && node --check www/service-worker.js && node --check scripts/build.mjs && node tests/pwa.mjs && node tests/backup.mjs",
     "build": "npm run vendor && node scripts/build.mjs"
   },
   "dependencies": {
