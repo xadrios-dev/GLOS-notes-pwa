@@ -24,7 +24,7 @@ await tx('audio','readwrite',s=>s.put({id:'audio-old',blob:new Blob(['testing-au
 await tx('images','readwrite',s=>s.put({id:'image-old',blob:new Blob(['testing-image'],{type:'image/png'})}));
 let downloaded=null;
 const context={
-  window:{JSZip},
+  window:{JSZip},JSZip,
   indexedDB,Blob,crypto:webcrypto,
   URL:{createObjectURL:blob=>{downloaded=blob;return 'blob:offline-zip'},revokeObjectURL(){}},
   document:{body:{appendChild(){}},createElement:()=>({click(){},remove(){}})},
