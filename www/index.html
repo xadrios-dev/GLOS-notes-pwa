@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
   <meta name="theme-color" content="#f7f8f5"><meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GŁOS Notes"><meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="GŁOS Notes: nagrywaj, transkrybuj lokalnie i rozmawiaj ze swoimi notatkami.">
   <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="dark.css"><link rel="stylesheet" href="design-system.css"><title>GŁOS Notes</title>
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="dark.css"><link rel="stylesheet" href="design-system.css"><link rel="stylesheet" href="pwa.css"><title>GŁOS Notes</title>
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
@@ -50,10 +53,14 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <input id="import-file" type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/mp4,audio/ogg,audio/flac,.mp3,.wav,.m4a,.ogg,.opus,.flac" hidden>
     <input id="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" multiple hidden>
+    <input id="backup-file" type="file" accept=".zip,application/zip" hidden>
   </div>
   <script src="vendor/markdown-it.min.js" defer></script>
   <script src="vendor/purify.min.js" defer></script>
   <script src="vendor/turndown.min.js" defer></script>
+  <script src="vendor/jszip.min.js" defer></script>
+  <script src="pwa-backup.js" defer></script>
+  <script src="pwa.js" defer></script>
   <script src="sync-journal.js" defer></script>
   <script src="platform.js" defer></script>
   <script src="library-search.js" defer></script>

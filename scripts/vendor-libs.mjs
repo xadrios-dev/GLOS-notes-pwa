@@ -7,7 +7,8 @@ fs.mkdirSync(vendor,{recursive:true});
 for(const [source,name] of [
   ['node_modules/markdown-it/dist/markdown-it.min.js','markdown-it.min.js'],
   ['node_modules/dompurify/dist/purify.min.js','purify.min.js'],
-  ['node_modules/turndown/dist/turndown.js','turndown.min.js']
+  ['node_modules/turndown/dist/turndown.js','turndown.min.js'],
+  ['node_modules/jszip/dist/jszip.min.js','jszip.min.js']
 ]){
   if(!fs.existsSync(source))throw Error('Brak biblioteki '+source+'; uruchom npm install.');
   fs.copyFileSync(source,path.join(vendor,name));
