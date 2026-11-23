@@ -78,7 +78,7 @@
         if(total>MAX_ARCHIVE)throw Error('Kopia przekracza 300 MB. Wyeksportuj część notatek osobno.');
         const file='media/'+kind+'/'+i+'.bin';
         list[kind].push({id,file,size:entry.blob.size,mime:entry.blob.type||'application/octet-stream'});
-        zip.file(file,entry.blob,{compression:'STORE'});
+        zip.file(file,new Uint8Array(await entry.blob.arrayBuffer()),{compression:'STORE'});
       }
     }
     zip.file('backup.json',JSON.stringify({format:FORMAT,version:1,createdAt:Date.now(),data,media:list}));
@@ -97,7 +97,7 @@
     if(!window.JSZip)throw Error('Biblioteka ZIP nie została załadowana.');
     if(!(file instanceof Blob)||!file.size||file.size>MAX_ARCHIVE)
       throw Error('Nieprawidłowy plik ZIP lub przekroczony limit 300 MB.');
-    const zip=await JSZip.loadAsync(file,{checkCRC32:true});
+    const zip=await JSZip.loadAsync(await file.arrayBuffer(),{checkCRC32:true});
     const entry=zip.file('backup.json');
     if(!entry||entry._data?.uncompressedSize>8*1024*1024)
       throw Error('To nie jest kopia PWA GŁOS Notes.');
