@@ -73,6 +73,7 @@
   const platform = {
     isNative,
     isIOS,
+    isPWA:()=>true,
     notes: {
       async all() { return (await tx('notes','readonly',s=>s.getAll())) || []; },
       async one(id) { return tx('notes','readonly',s=>s.get(id)); },
@@ -120,9 +121,26 @@
       return response.vectors;
     },
     async aiEmbeddings({baseUrl,model,inputs}){
-      if(!isNative())throw Error('Embeddingi wymagają aplikacji na Androidzie.');
-      const out=await invoke('aiEmbeddings',{baseUrl,model,inputs});
-      return out.vectors||[];
+      if(isNative()){
+        const out=await invoke('aiEmbeddings',{baseUrl,model,inputs});
+        return out.vectors||[];
+      }
+      const key=sessionStorage.getItem('glos_ai_key');
+      if(!key)throw Error('Dodaj klucz API w ustawieniach.');
+      if(!/^https:\/\//i.test(baseUrl) && !/^http:\/\/localhost(?::\d+)?\/v1\/?$/.test(baseUrl))
+        throw Error('API musi korzystać z HTTPS.');
+      if(!Array.isArray(inputs)||inputs.length===0||inputs.length>8||inputs.some(x=>typeof x!=='string'))
+        throw Error('Nieprawidłowe dane do embeddingów.');
+      const response=await fetch(baseUrl.replace(/\/+$/,'')+'/embeddings',{
+        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},
+        body:JSON.stringify({model,input:inputs})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw Error(data.error?.message||'Embedding API HTTP '+response.status);
+      const vectors=(data.data||[]).sort((a,b)=>a.index-b.index).map(x=>x.embedding);
+      if(vectors.length!==inputs.length||vectors.some(v=>!Array.isArray(v)||v.length<64))
+        throw Error('API nie zwróciło prawidłowych embeddingów.');
+      return vectors;
     },
     tasks:{
       async all(){return (await tx('tasks','readonly',s=>s.getAll()))||[];},
@@ -130,15 +148,16 @@
       async delete(id){return withDb(db=>journal().write(db,'task',id,null,true));}
     },
     async exportBackup(data){
-      if(!isNative())throw Error('Eksport ZIP jest dostępny w aplikacji Android.');
-      return invoke('exportBackup',{data:JSON.stringify(data)});
+      if(isNative())return invoke('exportBackup',{data:JSON.stringify(data)});
+      return window.GlosPwaBackup.exportArchive(data);
     },
-    async importBackup(){
-      if(!isNative())throw Error('Import ZIP jest dostępny w aplikacji Android.');
-      return invoke('importBackup');
+    async importBackup(file){
+      if(isNative())return invoke('importBackup');
+      return window.GlosPwaBackup.importArchive(file);
     },
     async discardBackupImport(createdFiles){
       if(isNative())return invoke('discardBackupImport',{createdFiles});
+      return window.GlosPwaBackup.rollback(createdFiles);
     },
     async consumeQuickRecordLaunch(){
       return isNative() ? (await invoke('consumeQuickRecordLaunch')).requested===true : false;
@@ -174,13 +193,19 @@
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw Error('Nagrywanie wymaga obsługiwanej przeglądarki i HTTPS.');
       audioStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
       chunks = [];
-      const types = ['audio/webm;codecs=opus','audio/mp4','audio/webm'];
-      const mimeType = types.find(t=>MediaRecorder.isTypeSupported(t)) || '';
-      mediaRecorder = new MediaRecorder(audioStream, mimeType ? {mimeType} : undefined);
-      mediaRecorder.addEventListener('dataavailable',e=>{if(e.data.size)chunks.push(e.data);});
-      mediaRecorder.start(1000);
-      webStartedAt = Date.now(); pausedAt=0; pausedTotal=0;
-      return {recording:true};
+      try{
+        const types = ['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+        const mimeType = types.find(t=>MediaRecorder.isTypeSupported?.(t)) || '';
+        mediaRecorder = new MediaRecorder(audioStream,mimeType ? {mimeType} : undefined);
+        mediaRecorder.addEventListener('dataavailable',e=>{if(e.data.size)chunks.push(e.data);});
+        mediaRecorder.start(1000);
+        webStartedAt = Date.now(); pausedAt=0; pausedTotal=0;
+        return {recording:true};
+      }catch(err){
+        audioStream.getTracks().forEach(t=>t.stop());
+        audioStream=null;mediaRecorder=null;chunks=[];
+        throw err;
+      }
     },
     async pauseRecording() {
       if (isNative()) return invoke('pauseRecording');
@@ -198,14 +223,23 @@
       if (isNative()) return invoke('stopRecording');
       if (!mediaRecorder || mediaRecorder.state==='inactive') throw Error('Brak aktywnego nagrania.');
       const m = mediaRecorder;
-      const blob = await new Promise((resolve,reject)=>{
-        m.addEventListener('stop',()=>resolve(new Blob(chunks,{type:m.mimeType||'audio/webm'})),{once:true});
-        m.addEventListener('error',e=>reject(e.error||Error('Błąd nagrywania')),{once:true});
-        m.stop();
-      });
-      audioStream?.getTracks().forEach(t=>t.stop()); audioStream=null;mediaRecorder=null;
-      await platform.notes.putAudio(id,blob);
-      return {audioRef:id,audioMime:blob.type,durationMs:Date.now()-webStartedAt-pausedTotal-(pausedAt?Date.now()-pausedAt:0),size:blob.size};
+      let blob;
+      try{
+        blob=await new Promise((resolve,reject)=>{
+          m.addEventListener('stop',()=>{
+            const type=m.mimeType||chunks.find(c=>c.type)?.type||'audio/mp4';
+            resolve(new Blob(chunks,{type}));
+          },{once:true});
+          m.addEventListener('error',e=>reject(e.error||Error('Błąd nagrywania')),{once:true});
+          m.stop();
+        });
+        if(!blob.size)throw Error('Nagranie jest puste. Sprawdź uprawnienia mikrofonu.');
+        await platform.notes.putAudio(id,blob);
+        return {audioRef:id,audioMime:blob.type,durationMs:Date.now()-webStartedAt-pausedTotal-(pausedAt?Date.now()-pausedAt:0),size:blob.size};
+      }finally{
+        audioStream?.getTracks().forEach(t=>t.stop());
+        audioStream=null;mediaRecorder=null;chunks=[];
+      }
     },
     async audioUrl(note) {
       if (note.audioRef?.startsWith('file://')) return fileUrl(note.audioRef);
@@ -225,8 +259,15 @@
     async shareAudio(note) {
       if(isNative())return invoke('shareAudio',{path:note.audioRef});
       const blob=await platform.notes.getAudio(note.audioRef||note.id);if(!blob)throw Error('Brak nagrania.');
-      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='glos-'+note.id+'.'+(blob.type.includes('mp4')?'m4a':'webm');a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const filename='GLOS-'+(note.id||'nagranie')+'.'+(blob.type.includes('mp4')?'m4a':'webm');
+      const file=new File([blob],filename,{type:blob.type||'audio/mp4'});
+      if(navigator.canShare?.({files:[file]})){
+        try{await navigator.share({files:[file],title:'GŁOS Notes'});return;}
+        catch(err){if(err.name==='AbortError')return;}
+      }
+      const url=URL.createObjectURL(file),a=document.createElement('a');
+      a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
     },
     async shareText(text) {
       if(isNative())return invoke('shareText',{text});
