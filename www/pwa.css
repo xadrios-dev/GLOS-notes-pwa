@@ -1,0 +1,19 @@
+/* iOS standalone safe areas and PWA-specific settings. */
+html{overscroll-behavior-y:none;-webkit-text-size-adjust:100%}
+body{min-height:100dvh}
+button,input,textarea,select{font:inherit}
+input,textarea,select{font-size:max(16px,1em)}
+.pwa-help{border:1px solid var(--line);border-radius:var(--radius-sm,12px);background:var(--paper);padding:14px}
+.pwa-help p{margin:6px 0 0;color:var(--soft);line-height:1.6}
+.pwa-help strong{color:var(--dark)}
+.pwa-help + .pwa-help{margin-top:10px}
+.pwa-health{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:var(--teal)}
+.pwa-offline .pwa-health{color:var(--soft)}
+.pwa-data-warning{border-left:3px solid var(--teal);padding:8px 12px;background:var(--paper);border-radius:6px;font-size:12px}
+html.pwa-standalone body{padding-top:env(safe-area-inset-top,0px)}
+html.pwa-standalone .bottom-nav{padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+html.pwa-standalone .recorder-screen{padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(max-width:500px){
+  .pwa-backup-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .pwa-backup-actions .btn{min-width:0;white-space:normal}
+}
