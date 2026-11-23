@@ -61,6 +61,7 @@
     {id:'gemma-int8',title:'EmbeddingGemma 300M · INT8 (Arm)',meta:'~302 MB · silnik LiteRT w przygotowaniu'}
   ];
   const embeddingProvider=()=>{
+    if(P.isPWA?.())return 'api';
     const choice=state.settings.embeddingProvider;
     if(['potion-int8','gemma-mixed','gemma-int8','api'].includes(choice))return choice;
     // Preserve API models and vectors configured before the offline update.
@@ -100,6 +101,7 @@
   const tagPill=t=>`<span class="tag-pill" style="--tag:${safeColor(t.color)}"><i></i>${e(t.name)}</span>`;
   const modelInstalled=id=>Boolean((state.model?.models||{})[id]||(id==='parakeet'&&state.model?.installed));
   state.tags=getTags();
+  if(P.isPWA?.())state.settings.autoTranscribe=false;
   try{
     const messages=JSON.parse(localStorage.getItem('glos_library_chat')||'[]');
     state.libraryChat=Array.isArray(messages)?messages.slice(-24):[];
@@ -711,7 +713,7 @@
         <p class="editor-hint">Zmiany w edytorze zostaną zachowane po kliknięciu „Zapisz tekst”. Możesz przełączać widoki bez utraty szkicu.</p>
         <div class="btn-row">
           <button class="btn outline" data-action="save-transcript">${ico('check')} Zapisz tekst</button>
-          <button class="btn accent" data-action="transcribe" ${!n.audioRef&&!(n.extraRecordings||[]).length?'disabled':''}>${ico('spark')} Transkrybuj</button>
+          <button class="btn accent" data-action="transcribe" ${P.isPWA?.()||(!n.audioRef&&!(n.extraRecordings||[]).length)?'disabled':''}>${ico('spark')} Transkrybuj</button>
         </div>
         ${transcriptTimeline(n)}
         <button class="btn outline full" data-action="ai-format-transcript" style="margin-top:10px">${ico('spark')} Formatuj z AI</button>
@@ -770,44 +772,20 @@
         </div>
         <p class="hint" id="palette-feedback">Podgląd jest natychmiastowy. Wybór zostanie zapamiętany na tym urządzeniu.</p>
       </section>
+      <section class="settings-group" id="pwa-install"><h2>GŁOS Notes na iPhonie</h2>
+        <div class="pwa-help"><strong>Instalacja bez App Store</strong>
+          <p>Otwórz stronę w Safari, dotknij Udostępnij, wybierz „Dodaj do ekranu początkowego”, następnie „Dodaj”.</p></div>
+        <div class="pwa-help"><strong>Nagrywanie w Safari</strong>
+          <p>Mikrofon działa po udzieleniu zgody. Nie blokuj ekranu ani nie przełączaj aplikacji podczas nagrywania. Obsługa zależy od wersji iOS.</p></div>
+        <p class="pwa-health" id="pwa-status-live">${navigator.onLine?'Online':'Offline: notatki i nagrywanie lokalne'}</p>
+        <p class="hint">Po pierwszym otwarciu online aplikacja zapisuje pliki interfejsu i może uruchamiać się bez internetu. Transkrypcja przez modele Androida i nagrywanie w tle nie są dostępne w PWA.</p>
+      </section>
       <section class="settings-group" id="semantic-settings"><h2>Wyszukiwanie semantyczne</h2>
-        <p>Lokalne modele działają bez Internetu. Pobierzesz je tylko na żądanie, bez powiększania APK. Dane notatek pozostają na urządzeniu.</p>
-        <label for="embedding-provider">Silnik embeddingów</label>
-        <select id="embedding-provider" class="field">
-          <option value="potion-int8" ${embeddingProvider()==='potion-int8'?'selected':''}>Potion Multilingual 128M · INT8 (offline)</option>
-          <option value="gemma-mixed" ${embeddingProvider()==='gemma-mixed'?'selected':''}>EmbeddingGemma 300M · mixed precision (offline)</option>
-          <option value="gemma-int8" ${embeddingProvider()==='gemma-int8'?'selected':''}>EmbeddingGemma 300M · INT8 Arm (w przygotowaniu)</option>
-          <option value="api" ${embeddingProvider()==='api'?'selected':''}>OpenAI-compatible API (online)</option>
-        </select>
-        <div class="embedding-model-catalog">${embeddingRows()}</div>
-        <p class="hint">Potion i Gemma mixed precision mają własne pliki oraz indeksy. Wariant Arm INT8 wymaga innego silnika LiteRT i jest na razie widoczny, ale nie można go jeszcze pobrać.</p>
-        <div class="embedding-api-settings" id="embedding-api-settings" ${embeddingProvider()==='api'?'':'hidden'}>
-          <label for="embedding-model">Identyfikator modelu w API</label>
-          <input id="embedding-model" class="field" maxlength="200" value="${e(state.settings.embeddingModel||defaults.embeddingModel)}">
-          <p class="hint">W tym trybie tekst fragmentów i pytania mogą trafiać do dostawcy API. Używany jest zapisany klucz AI.</p>
-        </div>
+        <p>Wyszukiwanie słów jest lokalne i offline. Opcjonalne embeddingi API wymagają internetu, klucza i dostawcy obsługującego żądania z przeglądarki (CORS).</p>
+        <label for="embedding-model">Model embeddingów API</label>
+        <input id="embedding-model" class="field" maxlength="200" value="${e(state.settings.embeddingModel||defaults.embeddingModel)}">
+        <p class="hint">Modele Potion i Gemma offline wymagają natywnego środowiska Android i nie działają w Safari.</p>
         <button type="button" class="btn sm outline" data-action="open-semantic">Otwórz indeks w Bibliotece AI</button>
-      </section>
-      <section class="settings-group"><h2>Modele rozpoznawania mowy</h2>
-        <p>Transkrypcja offline, bez wysyłania nagrań. Pobieraj wyłącznie modele, których potrzebujesz.</p>
-        <label for="stt-engine">Model używany do transkrypcji</label>
-        <select id="stt-engine" class="field">${sttList.map(x=>`<option value="${x.id}" ${(state.settings.sttEngine||'parakeet')===x.id?'selected':''}>${x.name}</option>`).join('')}</select>
-        <div class="model-catalog">${sttList.map(x=>`<div class="stt-model">
-          <div class="stt-model-copy"><strong>${x.name}</strong><small>${x.info}</small><span class="model-status">${modelInstalled(x.id)?'Zainstalowany':'Niepobrany'}</span></div>
-          <div class="stt-model-actions">${modelInstalled(x.id)
-            ?`<button class="btn sm outline" data-action="delete-model" data-model="${x.id}">Usuń</button>`
-            :`<button class="btn sm accent" data-action="download-model" data-model="${x.id}" ${!P.isNative()?'disabled':''}>${ico('download')} Pobierz</button>`}
-          </div>
-        </div>`).join('')}</div>
-        <p class="hint">Whisper Tiny, Base i Small to warianty wielojęzyczne z polskim. Tiny jest szybszy, Small zwykle dokładniejszy, ale wymaga więcej RAM.</p>
-        <div class="setting-switch"><label for="auto-transcribe">Transkrybuj automatycznie po nagraniu</label><input type="checkbox" id="auto-transcribe" ${state.settings.autoTranscribe?'checked':''}></div>
-      </section>
-
-      <section class="settings-group" id="overlay-settings"><h2>Panel pływający podczas nagrywania</h2>
-        <p>Po przejściu na pulpit lub do innej aplikacji widoczny będzie niewielki panel z licznikiem, pauzą, wznowieniem i stopem. Panel można przeciągać.</p>
-        <div class="overlay-preference"><div><strong>Pływający rejestrator</strong><small id="overlay-status">Sprawdzam uprawnienia…</small></div>
-          <button class="btn sm accent" data-action="toggle-overlay">Włącz</button></div>
-        <p class="hint">Android wymaga osobnej zgody „Wyświetlaj nad innymi aplikacjami”. Bez zgody sterowanie będzie dostępne w powiadomieniu.</p>
       </section>
       <section class="settings-group" id="sync-settings">
         <h2>Synchronizacja między urządzeniami</h2>
@@ -824,7 +802,15 @@
         </div>
         ${state.driveProbe?.authorized?'<p class="sync-connect-status">Połączenie testowe działa. Google Drive appDataFolder jest dostępny. Wysyłanie danych pozostaje wyłączone.</p>':''}
         <p class="hint">Test połączenia poprosi Google wyłącznie o dostęp do prywatnego folderu aplikacji na Dysku. Wymaga jednorazowej konfiguracji OAuth w Google Cloud (identyfikator pakietu i odcisk certyfikatu). Nie jest to jeszcze aktywna synchronizacja.</p>
-        <p class="hint">Pełna kopia ZIP w ustawieniach pozostaje niezależnym zabezpieczeniem. Przed przenoszeniem danych między telefonami zrób eksport ZIP.</p>
+        <p class="hint">Kopia ZIP obejmuje lokalne notatki, nagrania i zdjęcia. Nie zawiera klucza API. Synchronizacja między urządzeniami nadal nie jest aktywna.</p>
+      </section>
+      <section class="settings-group" id="pwa-backup"><h2>Kopia zapasowa danych</h2>
+        <p>Nagrania i zdjęcia są zapisywane tylko na tym urządzeniu. Przeglądarka może usunąć dane, dlatego regularnie zapisuj kopie w aplikacji Pliki lub iCloud Drive.</p>
+        <div class="btn-row pwa-backup-actions">
+          <button class="btn accent" data-action="backup-export">${ico('download')} Pobierz ZIP</button>
+          <button class="btn outline" data-action="backup-import">${ico('refresh')} Importuj ZIP</button>
+        </div>
+        <p class="pwa-data-warning"><strong>Uwaga:</strong> ZIP nie jest zaszyfrowany. Trzymaj go prywatnie. Import tworzy kopie notatek i nie nadpisuje aktualnych danych.</p>
       </section>
       <section class="settings-group" id="tag-manager"><h2>Tagi i kolory</h2>
         <p>Utwórz własne tagi, przypisuj je do wielu notatek i filtruj listę jednym dotknięciem.</p>
@@ -849,8 +835,8 @@
        <input id="ai-key" class="field" type="password" autocomplete="new-password" spellcheck="false" placeholder="${state.hasKey?'Nowy klucz (pozostaw puste, aby zachować)':'Wklej klucz API'}">
        <div class="btn-row" style="margin-top:13px"><button class="btn primary" data-action="save-settings">${ico('check')} Zapisz</button>
        <button class="btn" data-action="clear-key">Usuń klucz</button></div>
-       <div class="security-copy" style="margin-top:14px">${ico('lock')}<span>${P.isIOS?.()?'iOS Preview: klucz API jest przechowywany tylko przez bieżącą sesję. Bezpieczny Keychain wymaga jeszcze natywnej integracji.':'Klucz w APK jest chroniony Android Keystore.'}</span></div>
-      </section><div class="settings-foot">GŁOS Notes 2.0 alpha.14 · dane lokalne${P.isIOS?.()?' · iOS Preview':''}</div>`;
+       <div class="security-copy" style="margin-top:14px">${ico('lock')}<span>Wersja PWA przechowuje klucz API tylko w bieżącej sesji przeglądarki. Nie zapisuj kluczy w kopiach ZIP. Żądania do API wymagają CORS.</span></div>
+      </section><div class="settings-foot">GŁOS Notes 2.0 PWA · dane lokalne · Safari</div>`;
     const overlayLabel=$('#overlay-status');
     const overlayToggle=$('[data-action="toggle-overlay"]');
     if(overlayLabel)overlayLabel.textContent=!P.isNative()?'Dostępne tylko w APK':state.overlay.enabled?(state.overlay.granted?'Włączony':'Czeka na zgodę Androida'):'Wyłączony';
@@ -1039,7 +1025,7 @@
     }catch(err){say(err.message||'Błąd usuwania modelu.',true);}
   }
   async function buildSemanticIndex(){
-    if(!P.isNative()){say('Lokalne embeddingi wymagają Android APK.',true);return;}
+    if(!P.isNative()&&!P.isPWA?.()){say('Niedostępne na tej platformie.',true);return;}
     const model=embeddingModelId();
     if(embeddingProvider()==='api'&&!state.hasKey){say('Skonfiguruj klucz API.',true);return;}
     if(embeddingProvider()!=='api'&&!embeddingInstalled(embeddingProvider())){say('Najpierw pobierz wybrany model embeddingów.',true);return;}
@@ -1105,7 +1091,7 @@
       <details class="semantic-panel"><summary>Wyszukiwanie semantyczne · ${state.semanticCount||0} fragmentów w indeksie</summary>
         <p>Tryb lokalny indeksuje i wyszukuje całkowicie offline. W trybie API zarówno indeksowanie, jak i wyszukiwanie pytania korzysta z zewnętrznego dostawcy. Wektory przechowujemy na telefonie.</p>
         <div class="semantic-actions">
-          <button class="btn sm accent" data-action="semantic-index" ${!P.isNative()||(embeddingProvider()==='api'?!state.hasKey:!embeddingInstalled(embeddingProvider()))?'disabled':''}>Zbuduj / odśwież indeks</button>
+          <button class="btn sm accent" data-action="semantic-index" ${embeddingProvider()==='api'?!state.hasKey:!embeddingInstalled(embeddingProvider())?'disabled':''}>Zbuduj / odśwież indeks</button>
           <button class="btn sm outline" data-action="semantic-clear" ${!state.semanticCount?'disabled':''}>Wyczyść indeks</button>
         </div>
         <small>Limit 400 fragmentów na przebieg · model: ${e(embeddingModelId())}. Każdy model ma oddzielne wektory.</small>
@@ -1137,7 +1123,7 @@
       const search=window.GlosLibrarySearch;
       if(!search)throw Error('Moduł wyszukiwania biblioteki jest niedostępny.');
       let results=search.rank(state.notes,text,state.tags);
-      if(state.semanticCount>0&&window.GlosSemantic&&P.isNative()){
+      if(state.semanticCount>0&&window.GlosSemantic){
         try{
           busyMessage('Szukam także znaczeniowo…');
           const model=embeddingModelId();
@@ -1305,7 +1291,7 @@
   }
   async function enterNote(id,tab='transcript'){state.selected=id;state.tab=tab;setPage('detail');}
   async function createBackup(){
-    if(!P.isNative()){say('Kopia ZIP wymaga aplikacji Android.',true);return;}
+    if(!P.isNative()&&!P.isPWA?.()){say('Kopia ZIP wymaga aplikacji.',true);return;}
     try{
       busy('Tworzę kopię ZIP','Wybierz miejsce zapisu nagrań, zdjęć i notatek.');
       const data={
@@ -1321,8 +1307,9 @@
     }catch(err){say(err.message||'Eksport kopii nie powiódł się.',true)}
     finally{done();}
   }
-  async function restoreBackup(){
-    if(!P.isNative()){say('Przywracanie ZIP wymaga aplikacji Android.',true);return;}
+  async function restoreBackup(file=null){
+    if(P.isPWA?.()&&!file)return;
+    if(!P.isNative()&&!P.isPWA?.()){say('Przywracanie ZIP wymaga aplikacji.',true);return;}
     if(!confirm('Przywracanie utworzy kopie notatek i zadań, bez usuwania bieżącej biblioteki. Przypomnienia trzeba włączyć ponownie. Kontynuować?'))return;
     let imported=null;
     const createdNotes=[],createdTasks=[];
@@ -1331,7 +1318,7 @@
     const oldChat=JSON.parse(JSON.stringify(state.libraryChat));
     try{
       busy('Przywracam kopię','Wybierz plik ZIP z GŁOS Notes.');
-      imported=await P.importBackup();
+      imported=await P.importBackup(file);
       if(!imported||imported.cancelled)return;
       const data=imported.data,mapping=imported.mapping||{};
       if(!data||!Array.isArray(data.notes)||!Array.isArray(data.tasks||[]))
@@ -1369,13 +1356,13 @@
         n.chat=Array.isArray(n.chat)?n.chat.slice(-100):[];
         n.tags=Array.isArray(n.tags)?n.tags.map(t=>tagsById.get(t)).filter(Boolean):[];
         n.audioRef=remap(n.audioRef);
-        n.audioMime=n.audioRef?'audio/wav':'';
+        n.audioMime=n.audioRef?(P.isPWA?.()?String(raw.audioMime||'audio/mp4').slice(0,100):'audio/wav'):'';
         n.extraRecordings=(Array.isArray(n.extraRecordings)?n.extraRecordings:[]).map(c=>({
-          ...c,id:uuid(),audioRef:remap(c.audioRef),audioMime:'audio/wav'
+          ...c,id:uuid(),audioRef:remap(c.audioRef),audioMime:P.isPWA?.()?String(c.audioMime||'audio/mp4').slice(0,100):'audio/wav'
         }));
-        n.images=(Array.isArray(n.images)?n.images:[]).slice(0,20).map(img=>({
-          ...img,id:uuid(),path:remap(img.path)
-        }));
+        n.images=(Array.isArray(n.images)?n.images:[]).slice(0,20).map(img=>
+          P.isPWA?.()?{...img,id:remap(img.id),path:undefined}:
+            {...img,id:uuid(),path:remap(img.path)});
         delete n.incomingShareId;delete n.incomingShareIds;
         n.updatedAt=Date.now();n.restoredFromBackup=true;
         await P.notes.save(n);
@@ -1472,7 +1459,7 @@
     $('#recorder')?.remove();
     const layer=document.createElement('section');layer.className='recorder-screen'+(state.paused?' paused':'');layer.id='recorder';
     layer.innerHTML=`<div class="rec-top"><span>GŁOS / REJESTRATOR</span><span class="live"><span></span>${state.paused?'PAUZA':'NAGRYWANIE'}</span></div>
-      <div class="rec-center"><h2>${state.paused?'Nagranie wstrzymane':state.recordMode==='continue'?'Kontynuuję nagranie':state.recordMode==='extra'?'Dogrywam kolejny klip':'Nagrywam Twoją myśl'}</h2><div id="rec-clock" class="rec-timer">${formatDuration(state.elapsed)}</div><p>${state.paused?'Możesz wrócić do nagrania w dowolnej chwili.':P.isIOS?.()?'W iOS Preview nie blokuj ekranu podczas nagrywania.':'Możesz zablokować ekran telefonu.'}</p>
+      <div class="rec-center"><h2>${state.paused?'Nagranie wstrzymane':state.recordMode==='continue'?'Kontynuuję nagranie':state.recordMode==='extra'?'Dogrywam kolejny klip':'Nagrywam Twoją myśl'}</h2><div id="rec-clock" class="rec-timer">${formatDuration(state.elapsed)}</div><p>${state.paused?'Możesz wrócić do nagrania w dowolnej chwili.':P.isPWA?.()?'Nie blokuj ekranu podczas nagrywania w Safari.':'Możesz zablokować ekran telefonu.'}</p>
        <div class="wave" aria-hidden="true">${Array.from({length:31},(_,i)=>`<i class="bar" style="--i:${(i*7)%19}"></i>`).join('')}</div></div>
        <div class="rec-markers"><button type="button" data-action="record-mark" class="rec-marker-btn" ${state.paused?'disabled':''}>★ Ważny moment <span id="rec-marker-count">${state.recordMarkers.length}</span></button></div>
        <div class="rec-bottom"><button class="rec-control" data-action="toggle-pause" aria-label="${state.paused?'Wznów nagrywanie':'Wstrzymaj nagrywanie'}">${ico(state.paused?'play':'pause')}</button>
@@ -1537,14 +1524,14 @@
         if(!joined)await saveExtraClip(note,audio,mode==='continue'?'continuation':'additional');
         state.selected=note.id;state.tab='transcript';setPage('detail');
         say(joined?'Kontynuacja połączona z nagraniem.':mode==='continue'?'Kontynuacja zapisana jako dodatkowy klip.':'Nowe dogranie zapisane.');
-        if(state.settings.autoTranscribe&&!note.transcript?.trim())setTimeout(()=>runTranscribe(),150);
+        if(!P.isPWA?.()&&state.settings.autoTranscribe&&!note.transcript?.trim())setTimeout(()=>runTranscribe(),150);
       }else{
         const title=`Notatka · ${new Intl.DateTimeFormat('pl-PL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date())}`;
         note={id,title,createdAt:Date.now(),updatedAt:Date.now(),
           durationMs:audio.durationMs||state.elapsed,audioRef:audio.audioRef||audio.path||'',
           audioMime:audio.audioMime||'audio/wav',extraRecordings:[],markers:state.recordMarkers.map(m=>({...m,clipId:'main'})),transcript:'',summary:'',chat:[]};
         await persist(note);state.selected=id;state.tab='transcript';setPage('detail');say('Nagranie zapisane');
-        if(state.settings.autoTranscribe)setTimeout(()=>runTranscribe(),150);
+        if(!P.isPWA?.()&&state.settings.autoTranscribe)setTimeout(()=>runTranscribe(),150);
       }
     }catch(err){say('Błąd zapisu: '+err.message,true);}
     finally{
@@ -1713,7 +1700,7 @@
       const baseUrl=$('#ai-base').value.trim().replace(/\/+$/,'');
       if(!/^https:\/\/[^\s/]+(?:\/.*)?$/i.test(baseUrl))throw Error('Wpisz poprawny adres API HTTPS.');
       const model=$('#ai-model').value.trim();if(!model)throw Error('Podaj nazwę modelu.');
-      state.settings={baseUrl,model,sttEngine:$('#stt-engine').value,autoTranscribe:$('#auto-transcribe').checked,summaryPreset:$('#summary-preset').value,summaryPrompt:$('#summary-prompt').value.trim().slice(0,6000)||summaryTemplates.general,theme:window.GlosTheme?.get()||'system',palette:window.GlosTheme?.getPalette()||'forest',
+      state.settings={baseUrl,model,sttEngine:$('#stt-engine')?.value||state.settings.sttEngine||'parakeet',autoTranscribe:!P.isPWA?.()&&!!$('#auto-transcribe')?.checked,summaryPreset:$('#summary-preset').value,summaryPrompt:$('#summary-prompt').value.trim().slice(0,6000)||summaryTemplates.general,theme:window.GlosTheme?.get()||'system',palette:window.GlosTheme?.getPalette()||'forest',
         embeddingModel:($('#embedding-model')?.value.trim()||state.settings.embeddingModel||defaults.embeddingModel).slice(0,200),embeddingProvider:embeddingProvider()};
       localStorage.setItem('glos_settings',JSON.stringify(state.settings));
       const key=$('#ai-key').value.trim();if(key){await P.saveAiKey(key);state.hasKey=true;$('#ai-key').value='';}
@@ -1838,7 +1825,7 @@
       case 'sync-drive-test':await testDriveConnection();break;
       case 'save-settings':await saveSettings();break;
       case 'backup-export':await createBackup();break;
-      case 'backup-import':await restoreBackup();break;
+      case 'backup-import':$('#backup-file')?.click();break;
       case 'clear-key':await P.clearAiKey();state.hasKey=false;settings();say('Klucz usunięty');break;
       case 'export':{const n=findNote();if(n){if(P.isNative())await P.shareText(markdownExport(n));else saveTextFile(n.title||'notatka',markdownExport(n));say('Notatka udostępniona');}break;}
       case 'share-audio':{const n=findNote();if(n?.audioRef)await P.shareAudio(n);break;}
@@ -1868,6 +1855,11 @@
   $('#image-file').addEventListener('change',async event=>{
     if(event.target.files?.length)await attachImages([...event.target.files]);
     event.target.value='';
+  });
+  $('#backup-file').addEventListener('change',async event=>{
+    const file=event.target.files?.[0];
+    event.target.value='';
+    if(file)await restoreBackup(file);
   });
   document.addEventListener('input',event=>{
     if(event.target.id==='search-notes'){
