@@ -1,0 +1,368 @@
+/* GŁOS Notes · design system alpha.12.
+   Semantic tokens live here; existing feature styles keep their layout contracts.
+   Palette and brightness are independent: html[data-palette] + html[data-theme]. */
+:root{
+  --bg:#f6f8f7;--paper:#fff;--surface-2:#eef4f0;--dark:#183d33;
+  --ink:#243a33;--soft:#637a70;--teal:#137c67;--line:#dce7df;
+  --mint:#e4f2ea;--action:#206b57;--on-action:#fff;
+  --salmon:#b45448;--focus:#1d917b;--rec-bg:#173f34;--rec-ink:#f2fff7;
+  --nav-rgb:255,255,255;--header-rgb:246,248,247;
+  --radius-xs:9px;--radius-sm:12px;--radius:16px;--radius-lg:20px;
+  --card-shadow:0 5px 19px rgba(23,52,42,.035);
+  --control-shadow:0 5px 12px rgba(25,69,55,.12);
+  --hover:rgba(24,111,80,.07);--outline:rgba(19,124,103,.21);
+  --toast-bg:#213e34;--toast-ink:#fff;
+}
+html[data-theme="light"][data-palette="ocean"]{
+  --bg:#f5f8fc;--surface-2:#edf3fa;--dark:#1d4266;--ink:#263b50;
+  --soft:#637b91;--teal:#226faf;--line:#dbe6f1;--mint:#e7f0fb;
+  --action:#285f96;--focus:#287cba;--rec-bg:#173c5b;
+  --hover:rgba(36,101,171,.07);--outline:rgba(34,111,175,.22);
+  --header-rgb:245,248,252;
+}
+html[data-theme="light"][data-palette="violet"]{
+  --bg:#f8f6fc;--surface-2:#f1ecf9;--dark:#4b356a;--ink:#40354e;
+  --soft:#807189;--teal:#7d50ae;--line:#e8dff0;--mint:#f1e8fb;
+  --action:#704796;--focus:#8a55b1;--rec-bg:#322244;
+  --hover:rgba(120,73,156,.07);--outline:rgba(125,80,174,.22);
+  --header-rgb:248,246,252;
+}
+html[data-theme="light"][data-palette="sunset"]{
+  --bg:#fbf8f4;--surface-2:#f6efe6;--dark:#58412e;--ink:#493b31;
+  --soft:#837469;--teal:#9a612b;--line:#e9dfd3;--mint:#f8ead9;
+  --action:#915723;--focus:#ac6b2c;--rec-bg:#533a24;
+  --hover:rgba(145,87,35,.08);--outline:rgba(154,97,43,.22);
+  --header-rgb:251,248,244;
+}
+/* Neutral dark surfaces: the chosen accent is color, not a green overlay. */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#11171a;--paper:#1c252a;--surface-2:#263137;
+  --dark:#edf5f6;--ink:#dce7e9;--soft:#a4b6bd;--teal:#7adac0;
+  --line:#37474c;--mint:#263d3b;--action:#297e6c;--on-action:#fff;
+  --salmon:#f2a497;--focus:#8ae2cf;--rec-bg:#0d2223;--rec-ink:#effff9;
+  --nav-rgb:25,33,37;--header-rgb:17,23,26;
+  --card-shadow:0 4px 16px rgba(0,0,0,.13);--control-shadow:0 6px 16px rgba(0,0,0,.21);
+  --hover:rgba(147,202,188,.09);--outline:rgba(122,218,192,.25);
+  --toast-bg:#d9eee8;--toast-ink:#1a3230;
+}
+html[data-theme="dark"][data-palette="ocean"]{
+  --bg:#111821;--paper:#1b2735;--surface-2:#263748;--dark:#edf4ff;
+  --ink:#dce7f5;--soft:#a3b8cd;--teal:#8cc5ff;--line:#344b60;
+  --mint:#223a51;--action:#37699f;--focus:#9ad0ff;--rec-bg:#10283f;
+  --hover:rgba(140,197,255,.10);--outline:rgba(140,197,255,.23);
+  --nav-rgb:24,35,48;--header-rgb:17,24,33;
+}
+html[data-theme="dark"][data-palette="violet"]{
+  --bg:#17141e;--paper:#262031;--surface-2:#352b41;--dark:#f4effe;
+  --ink:#e9e0f3;--soft:#bcb0cd;--teal:#d0aeff;--line:#4a3b59;
+  --mint:#392b50;--action:#7653a5;--focus:#dfbfff;--rec-bg:#271c38;
+  --hover:rgba(208,174,255,.10);--outline:rgba(208,174,255,.24);
+  --nav-rgb:35,28,45;--header-rgb:23,20,30;
+}
+html[data-theme="dark"][data-palette="sunset"]{
+  --bg:#1c1815;--paper:#2c2520;--surface-2:#3a2f29;--dark:#fff1e4;
+  --ink:#eee1d4;--soft:#c4af9e;--teal:#f3c38c;--line:#534137;
+  --mint:#483729;--action:#966332;--focus:#ffd49d;--rec-bg:#312319;
+  --hover:rgba(243,195,140,.09);--outline:rgba(243,195,140,.24);
+  --nav-rgb:42,34,29;--header-rgb:28,24,21;
+}
+/* App shell, typography and one consistent touch target language. */
+html[data-theme],html[data-theme] body,html[data-theme] .app{
+  background:var(--bg);color:var(--ink);
+}
+html[data-theme] .app-header{
+  background:rgba(var(--header-rgb),.95);border-color:var(--line);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+html[data-theme] .bottom-nav{
+  background:rgba(var(--nav-rgb),.96);border-color:var(--line);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+html[data-theme] .brand-name,
+html[data-theme] .page-head h1,
+html[data-theme] .library-toolbar h1,
+html[data-theme] .note-row-head strong,
+html[data-theme] .settings-group h2,
+html[data-theme] .detail-section-head h2{color:var(--dark)}
+html[data-theme] .brand-emblem{
+  color:var(--on-action);background:var(--action);border-radius:var(--radius-sm)
+}
+html[data-theme] .brand-dot{color:var(--teal)}
+html[data-theme] .icon-button{color:var(--dark);border-radius:var(--radius-sm)}
+html[data-theme] .icon-button:active{background:var(--hover)}
+html[data-theme] .nav-item{color:var(--soft);transition:color .18s ease}
+html[data-theme] .nav-item.active{color:var(--teal)}
+html[data-theme] .record-fab{
+  color:var(--on-action);background:var(--action);border-color:var(--bg);
+  border-radius:21px;box-shadow:0 7px 0 var(--mint);transition:transform .18s ease
+}
+html[data-theme] .screen{color:var(--ink)}
+html[data-theme] .page-head h1{font-size:clamp(23px,5vw,28px);letter-spacing:-.7px}
+html[data-theme] .page-head p,
+html[data-theme] .note-row p,
+html[data-theme] .note-info,
+html[data-theme] .hint,
+html[data-theme] .task-meta,
+html[data-theme] .share-preview,
+html[data-theme] .settings-group p,
+html[data-theme] .settings-group label,
+html[data-theme] .audio-box small,
+html[data-theme] .note-row-foot{color:var(--soft)}
+html[data-theme] .settings-group h2{font-size:16px;line-height:1.4;letter-spacing:-.35px}
+html[data-theme] .settings-group p{font-size:12px;line-height:1.65}
+html[data-theme] .settings-group label{font-size:12px}
+html[data-theme] .settings-group{padding:18px}
+html[data-theme] input:focus-visible,
+html[data-theme] textarea:focus-visible,
+html[data-theme] select:focus-visible,
+html[data-theme] button:focus-visible{
+  outline:2px solid var(--focus);outline-offset:3px;
+}
+html[data-theme] ::selection{background:var(--mint);color:var(--dark)}
+/* All common surfaces share contrast, stroke, radius and elevation. */
+html[data-theme] .settings-group,
+html[data-theme] .note-card,
+html[data-theme] .audio-box,
+html[data-theme] .summary-body,
+html[data-theme] .blank-pane,
+html[data-theme] .extra-audio-card,
+html[data-theme] .share-card,
+html[data-theme] .task-proposals,
+html[data-theme] .semantic-panel,
+html[data-theme] .image-tile,
+html[data-theme] .transcript-editor-shell,
+html[data-theme] .timed-transcript,
+html[data-theme] .prompt-options,
+html[data-theme] .ocr-result,
+html[data-theme] .chat-msg.assistant,
+html[data-theme] .library-msg:not(.mine),
+html[data-theme] .stt-model,
+html[data-theme] .task-card{
+  background:var(--paper);color:var(--ink);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--card-shadow)
+}
+html[data-theme] .settings-group{border-radius:var(--radius-lg)}
+html[data-theme] .stt-model{
+  margin:8px 0;padding:13px 12px;gap:10px;box-shadow:none
+}
+html[data-theme] .stt-model-copy strong{color:var(--dark)}
+html[data-theme] .model-catalog{border-top:0}
+html[data-theme] .task-card{padding:13px;margin:9px 0;box-shadow:none}
+html[data-theme] .task-list{border-top:0;padding-top:7px}
+html[data-theme] .extra-audio-card,
+html[data-theme] .share-card{padding:14px}
+html[data-theme] .blank-pane{border-style:dashed}
+html[data-theme] .image-tile{overflow:hidden}
+html[data-theme] .transcript-editor-shell{overflow:hidden}
+html[data-theme] .sync-diagnostics{
+  border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;background:var(--line)
+}
+html[data-theme] .sync-diagnostics>div{background:var(--paper)}
+html[data-theme] .sync-diagnostics span{color:var(--soft)}
+html[data-theme] .sync-diagnostics strong{color:var(--dark)}
+/* Input, controls, segmented tabs, filters and buttons. */
+html[data-theme] .search,
+html[data-theme] .field,
+html[data-theme] .editor,
+html[data-theme] .tag-name-field,
+html[data-theme] .chat-form input,
+html[data-theme] .library-chat-form input,
+html[data-theme] .task-datetime,
+html[data-theme] .ocr-text,
+html[data-theme] .note-title,
+html[data-theme] .transcript-editable,
+html[data-theme] .transcript-markdown-input,
+html[data-theme] .transcript-preview-pane{
+  background:var(--paper);color:var(--ink);border-color:var(--line);
+  border-radius:var(--radius-sm)
+}
+html[data-theme] .note-title{background:transparent;color:var(--dark)}
+html[data-theme] .transcript-editable,
+html[data-theme] .transcript-markdown-input{border-radius:0}
+html[data-theme] .search{border:1px solid var(--line)}
+html[data-theme] .search input{background:transparent;color:var(--ink);border:0}
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder{color:var(--soft);opacity:.9}
+html[data-theme] input,
+html[data-theme] textarea,
+html[data-theme] select{accent-color:var(--teal)}
+html[data-theme] .btn,
+html[data-theme] .chip,
+html[data-theme] .tag-filter,
+html[data-theme] .note-tag-choice,
+html[data-theme] .shortcut,
+html[data-theme] .suggestion,
+html[data-theme] .library-sources button,
+html[data-theme] .content-tab,
+html[data-theme] .transcript-toolbar button{
+  border-radius:var(--radius-sm);
+  transition:background-color .18s ease,border-color .18s ease,color .18s ease,transform .16s ease;
+}
+html[data-theme] .btn,
+html[data-theme] .chip,
+html[data-theme] .shortcut,
+html[data-theme] .suggestion,
+html[data-theme] .library-sources button{
+  background:var(--paper);border:1px solid var(--line);color:var(--dark)
+}
+html[data-theme] .btn.primary,
+html[data-theme] .btn.accent,
+html[data-theme] .chip.active,
+html[data-theme] .send-btn,
+html[data-theme] .transcript-modes .btn.active{
+  background:var(--action);border-color:var(--action);color:var(--on-action)
+}
+html[data-theme] .btn.outline{
+  background:transparent;border-color:var(--line);color:var(--dark)
+}
+html[data-theme] .btn.danger{
+  color:var(--salmon);background:var(--surface-2);border-color:var(--line)
+}
+html[data-theme] .send-btn{border-radius:var(--radius-sm)}
+html[data-theme] .btn:not(:disabled):active,
+html[data-theme] .shortcut:not(:disabled):active{transform:scale(.98)}
+html[data-theme] .btn:not(.primary):not(.accent):not(.danger):not(:disabled):hover,
+html[data-theme] .suggestion:hover,
+html[data-theme] .shortcut:hover{background:var(--surface-2)}
+html[data-theme] .note-stack{border-top:0;gap:4px}
+html[data-theme] .note-row{
+  background:transparent;border:1px solid transparent;border-bottom-color:var(--line);
+  border-radius:var(--radius-sm);padding:13px 10px;
+  transition:background-color .18s ease,border-color .18s ease
+}
+html[data-theme] .note-row:hover,
+html[data-theme] .note-row:active{background:var(--hover);border-color:var(--line)}
+html[data-theme] .tag-filter{color:var(--soft);background:transparent}
+html[data-theme] .tag-filter.selected,
+html[data-theme] .note-tag-choice.chosen{
+  background:var(--mint);color:var(--dark);border-color:var(--teal)
+}
+html[data-theme] .note-tag-choice{color:var(--soft)}
+html[data-theme] .content-tabs{background:var(--surface-2);border-radius:var(--radius)}
+html[data-theme] .content-tab{color:var(--soft)}
+html[data-theme] .content-tab.active{
+  background:var(--paper);color:var(--dark);box-shadow:var(--card-shadow)
+}
+html[data-theme] .transcript-toolbar{background:var(--surface-2);border-color:var(--line)}
+html[data-theme] .transcript-toolbar button{color:var(--dark)}
+html[data-theme] .transcript-toolbar button:hover,
+html[data-theme] .transcript-toolbar button:focus-visible{
+  background:var(--paper);border-color:var(--line)
+}
+html[data-theme] .library-chat-form,
+html[data-theme] .chat-form{background:var(--bg)}
+html[data-theme] .library-msg.mine,
+html[data-theme] .chat-msg.user{
+  background:var(--mint);color:var(--dark);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:none
+}
+html[data-theme] .audio-box,
+html[data-theme] .tip-card,
+html[data-theme] .security-copy,
+html[data-theme] .model-line,
+html[data-theme] .overlay-preference,
+html[data-theme] .suggested-title,
+html[data-theme] .task-proposals,
+html[data-theme] .share-notice,
+html[data-theme] .ai-format-preview,
+html[data-theme] .sync-connect-status{
+  background:var(--surface-2);color:var(--ink);border-color:var(--line);
+  border-radius:var(--radius)
+}
+html[data-theme] .audio-box-icon{background:var(--mint);color:var(--teal);border-radius:var(--radius-sm)}
+html[data-theme] .task-check{background:var(--paper);color:var(--on-action);border-color:var(--line);border-radius:var(--radius-xs)}
+html[data-theme] .task-check.checked{background:var(--action);border-color:var(--action)}
+html[data-theme] .task-title-input{color:var(--dark);background:transparent}
+html[data-theme] .task-source,
+html[data-theme] .marker-time,
+html[data-theme] .timed-clock,
+html[data-theme] .rich-markdown a{color:var(--teal)}
+html[data-theme] .rich-markdown code{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
+html[data-theme] .rich-markdown pre{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+html[data-theme] .rich-markdown blockquote{background:var(--surface-2);color:var(--ink);border-color:var(--teal)}
+html[data-theme] .rich-markdown th{background:var(--surface-2)}
+html[data-theme] .rich-markdown th,
+html[data-theme] .rich-markdown td{border-color:var(--line)}
+html[data-theme] .markers-section,
+html[data-theme] .markers-list,
+html[data-theme] .marker-item,
+html[data-theme] .library-sources{border-color:var(--line)}
+html[data-theme] .timed-transcript-segment{color:var(--ink);border-color:var(--line)}
+html[data-theme] .timed-transcript-segment.active,
+html[data-theme] .marker-seek:active{background:var(--mint)}
+html[data-theme] .ocr-text{border:1px solid var(--line)}
+html[data-theme] .toast{
+  background:var(--toast-bg);color:var(--toast-ink);
+  border-radius:var(--radius-sm);border:1px solid var(--line)
+}
+html[data-theme] .busy-card{background:var(--paper);color:var(--ink);border-radius:var(--radius-lg)}
+/* Recording has its own calm, contrasting canvas per palette. */
+html[data-theme] .recorder-screen{background:var(--rec-bg);color:var(--rec-ink)}
+html[data-theme] .rec-control{border-radius:var(--radius-lg)}
+html[data-theme] .rec-marker-btn{border-radius:var(--radius-sm)}
+html[data-theme] .rec-top{color:var(--rec-ink)}
+/* Accessible, live-preview palette selector in Settings. */
+html[data-theme] .palette-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;margin:8px 0 4px
+}
+html[data-theme] .palette-option{
+  display:block;position:relative;margin:0;min-width:0;cursor:pointer
+}
+html[data-theme] .palette-option input{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;
+  cursor:pointer;z-index:1
+}
+html[data-theme] .palette-option-content{
+  min-height:112px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+  background:var(--paper);border:1.5px solid var(--line);border-radius:var(--radius);
+  padding:12px;transition:border-color .18s,background-color .18s,box-shadow .18s
+}
+html[data-theme] .palette-option input:checked + .palette-option-content{
+  border-color:var(--teal);background:var(--surface-2);box-shadow:0 0 0 2px var(--outline)
+}
+html[data-theme] .palette-option input:focus-visible + .palette-option-content{
+  outline:2px solid var(--focus);outline-offset:3px
+}
+html[data-theme] .palette-option-content strong{font-size:12px;line-height:1.2;color:var(--dark)}
+html[data-theme] .palette-option-content small{font-size:10px;line-height:1.4;color:var(--soft)}
+html[data-theme] .palette-preview{display:flex;align-items:center;padding:1px 0 5px}
+html[data-theme] .palette-preview i{
+  display:block;width:19px;height:19px;border-radius:50%;
+  border:2px solid var(--paper);margin-right:-4px;
+  background:var(--swatch);box-shadow:0 0 0 1px var(--line)
+}
+html[data-theme] .palette-preview i:nth-child(2){background:var(--swatch-mid)}
+html[data-theme] .palette-preview i:nth-child(3){background:var(--swatch-dark)}
+html[data-theme] [data-palette-preview="forest"]{--swatch:#1b9078;--swatch-mid:#9bd9be;--swatch-dark:#183f36}
+html[data-theme] [data-palette-preview="ocean"]{--swatch:#337dc3;--swatch-mid:#96c9f0;--swatch-dark:#213e67}
+html[data-theme] [data-palette-preview="violet"]{--swatch:#9767c7;--swatch-mid:#d6b9ec;--swatch-dark:#473161}
+html[data-theme] [data-palette-preview="sunset"]{--swatch:#b97938;--swatch-mid:#eed0a3;--swatch-dark:#5b4129}
+html[data-theme] .theme-choice{background:var(--paper);color:var(--ink)}
+@media(max-width:360px){
+  html[data-theme] .settings-group{padding:15px}
+  html[data-theme] .palette-grid{gap:8px}
+  html[data-theme] .palette-option-content{padding:10px;min-height:108px}
+  html[data-theme] .page-head h1{font-size:23px}
+}
+@media(min-width:750px){
+  html[data-theme] .palette-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-theme] .btn,html[data-theme] .nav-item,
+  html[data-theme] .palette-option-content,html[data-theme] .note-row{
+    transition:none
+  }
+}
+
+/* Offline embedding model picker */
+html[data-theme] .embedding-model-catalog{display:grid;gap:9px;margin:13px 0}
+html[data-theme] .embedding-model-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px}
+html[data-theme] .embedding-model-row>div:first-child{flex:1;min-width:0;display:grid;gap:5px}
+html[data-theme] .embedding-model-row strong{font-size:12px;color:var(--dark)}
+html[data-theme] .embedding-model-row small{font-size:11px;line-height:1.5;color:var(--soft)}
+html[data-theme] .embedding-status{font-size:11px;font-weight:700;color:var(--teal)}
+html[data-theme] .embedding-api-settings[hidden]{display:none!important}
+@media(max-width:360px){html[data-theme] .embedding-model-row{flex-wrap:wrap}html[data-theme] .embedding-model-row>div:last-child,html[data-theme] .embedding-model-row .btn{width:100%}}
